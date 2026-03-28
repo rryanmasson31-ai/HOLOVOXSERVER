@@ -7,7 +7,9 @@ const PORT = process.env.PORT || 7860;
 const LIVEKIT_URL = process.env.LIVEKIT_URL;
 const API_KEY = process.env.LIVEKIT_API_KEY;
 const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"];
+// const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"];
+const ALLOWED_ORIGINS = ["https://holovox-rho.vercel.app", "http://localhost:3000"];
+console.log("Allowed origins:", ALLOWED_ORIGINS);
 
 if (!API_KEY || !API_SECRET || !LIVEKIT_URL) {
   console.error("❌ Missing LiveKit credentials.");
