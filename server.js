@@ -16,7 +16,7 @@ if (!API_KEY || !API_SECRET || !LIVEKIT_URL) {
 
 console.log("✅ LiveKit credentials found:");
 console.log("   URL:", LIVEKIT_URL);
-console.log("   API Key:", API_KEY.slice(0, 5) + "...");
+console.log("   API Key:", API_KEY ? API_KEY.slice(0,5)+"..." : "missing");
 console.log("   Secret:", API_SECRET ? "present" : "missing");
 
 const app = express();
@@ -50,9 +50,8 @@ app.post("/token", async (req, res) => {
     });
 
     const token = at.toJwt();
-
-    if (!token || typeof token !== 'string') {
-      throw new Error("Token generation produced an invalid value: " + typeof token);
+    if (!token || typeof token !== "string") {
+      throw new Error("Token is not a string: " + typeof token);
     }
 
     console.log(`✅ Token generated for ${userId} in room ${roomId}`);
@@ -60,11 +59,10 @@ app.post("/token", async (req, res) => {
   } catch (err) {
     console.error("❌ Token generation error:", err.message);
     console.error(err.stack);
-    res.status(500).json({ error: "Failed to generate token", details: err.message });
+    res.status(500).json({ error: "Token generation failed", details: err.message });
   }
 });
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Token server running on port ${PORT}`);
-  console.log(`   Allowed origins: ${ALLOWED_ORIGINS.join(", ")}`);
 });
