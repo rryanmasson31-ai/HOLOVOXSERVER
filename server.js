@@ -1,4 +1,3 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 const { AccessToken } = require("livekit-server-sdk");
@@ -15,6 +14,11 @@ if (!API_KEY || !API_SECRET || !LIVEKIT_URL) {
   process.exit(1);
 }
 
+console.log("✅ LiveKit credentials found:");
+console.log("   URL:", LIVEKIT_URL);
+console.log("   API Key:", API_KEY.slice(0, 5) + "...");
+console.log("   Secret:", API_SECRET ? "present" : "missing");
+
 const app = express();
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json());
@@ -28,30 +32,39 @@ app.post("/token", async (req, res) => {
     return res.status(400).json({ error: "Missing roomId or userId" });
   }
 
-  // 🔐 In production, determine host from your database.
-  // For now, we accept the client's claim.
   const actualIsHost = !!isHost;
 
-  const at = new AccessToken(API_KEY, API_SECRET, {
-    identity: userId,
-    ttl: 6 * 60 * 60, // 6 hours
-    metadata: JSON.stringify({ isHost: actualIsHost }),
-  });
+  try {
+    const at = new AccessToken(API_KEY, API_SECRET, {
+      identity: userId,
+      ttl: 6 * 60 * 60,
+      metadata: JSON.stringify({ isHost: actualIsHost }),
+    });
 
-  at.addGrant({
-    roomJoin: true,
-    room: roomId,
-    canPublish: true,
-    canSubscribe: true,
-    canPublishData: true,
-  });
+    at.addGrant({
+      roomJoin: true,
+      room: roomId,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+    });
 
-  const token = at.toJwt();
-  res.json({ token, url: LIVEKIT_URL });
+    const token = at.toJwt();
+
+    if (!token || typeof token !== 'string') {
+      throw new Error("Token generation produced an invalid value: " + typeof token);
+    }
+
+    console.log(`✅ Token generated for ${userId} in room ${roomId}`);
+    res.json({ token, url: LIVEKIT_URL });
+  } catch (err) {
+    console.error("❌ Token generation error:", err.message);
+    console.error(err.stack);
+    res.status(500).json({ error: "Failed to generate token", details: err.message });
+  }
 });
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Token server running on port ${PORT}`);
-  console.log(`   LiveKit URL: ${LIVEKIT_URL}`);
   console.log(`   Allowed origins: ${ALLOWED_ORIGINS.join(", ")}`);
 });
