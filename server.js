@@ -16,8 +16,22 @@ if (!API_KEY || !API_SECRET || !LIVEKIT_URL) {
 
 console.log("✅ LiveKit credentials found:");
 console.log("   URL:", LIVEKIT_URL);
-console.log("   API Key:", API_KEY.slice(0,5)+"...");
+console.log("   API Key:", API_KEY.slice(0, 5) + "...");
 console.log("   Secret:", API_SECRET ? "present" : "missing");
+
+// 🔥 Test credentials immediately – this will reveal if they are valid
+try {
+  const testToken = new AccessToken(API_KEY, API_SECRET, { identity: "test", ttl: 60 });
+  testToken.addGrant({ roomJoin: true, room: "test" });
+  const test = testToken.toJwt();
+  if (typeof test === "string" && test.length > 0) {
+    console.log("✅ Credentials are valid.");
+  } else {
+    console.error("❌ Credentials are invalid. toJwt() returned:", test);
+  }
+} catch (err) {
+  console.error("❌ Credentials test failed:", err.message);
+}
 
 const app = express();
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
@@ -50,14 +64,7 @@ app.post("/token", async (req, res) => {
     });
 
     const token = at.toJwt();
-
-    // If token is an object, log its contents for debugging
-    if (typeof token === "object") {
-      console.error("❌ Token is an object:", JSON.stringify(token, null, 2));
-      throw new Error(`Token is an object: ${JSON.stringify(token)}`);
-    }
-
-    if (!token || typeof token !== "string") {
+    if (typeof token !== "string" || token.length === 0) {
       throw new Error(`Invalid token type: ${typeof token}`);
     }
 
