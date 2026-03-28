@@ -50,8 +50,15 @@ app.post("/token", async (req, res) => {
     });
 
     const token = at.toJwt();
+
+    // If token is an object, log its contents for debugging
+    if (typeof token === "object") {
+      console.error("❌ Token is an object:", JSON.stringify(token, null, 2));
+      throw new Error(`Token is an object: ${JSON.stringify(token)}`);
+    }
+
     if (!token || typeof token !== "string") {
-      throw new Error(`Invalid token generated: ${typeof token}`);
+      throw new Error(`Invalid token type: ${typeof token}`);
     }
 
     console.log(`✅ Token generated for ${userId} in room ${roomId}`);
