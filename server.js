@@ -16,7 +16,7 @@ if (!API_KEY || !API_SECRET || !LIVEKIT_URL) {
 
 console.log("✅ LiveKit credentials found:");
 console.log("   URL:", LIVEKIT_URL);
-console.log("   API Key:", API_KEY ? API_KEY.slice(0,5)+"..." : "missing");
+console.log("   API Key:", API_KEY.slice(0,5)+"...");
 console.log("   Secret:", API_SECRET ? "present" : "missing");
 
 const app = express();
@@ -51,7 +51,7 @@ app.post("/token", async (req, res) => {
 
     const token = at.toJwt();
     if (!token || typeof token !== "string") {
-      throw new Error("Token is not a string: " + typeof token);
+      throw new Error(`Invalid token generated: ${typeof token}`);
     }
 
     console.log(`✅ Token generated for ${userId} in room ${roomId}`);
