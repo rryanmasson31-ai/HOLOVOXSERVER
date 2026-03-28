@@ -19,19 +19,26 @@ console.log("   URL:", LIVEKIT_URL);
 console.log("   API Key:", API_KEY.slice(0, 5) + "...");
 console.log("   Secret:", API_SECRET ? "present" : "missing");
 
-// 🔥 Test credentials immediately – this will reveal if they are valid
-try {
-  const testToken = new AccessToken(API_KEY, API_SECRET, { identity: "test", ttl: 60 });
-  testToken.addGrant({ roomJoin: true, room: "test" });
-  const test = testToken.toJwt();
-  if (typeof test === "string" && test.length > 0) {
-    console.log("✅ Credentials are valid.");
-  } else {
-    console.error("❌ Credentials are invalid. toJwt() returned:", test);
+// Test credentials – works with both sync and async toJwt
+(async () => {
+  try {
+    const testToken = new AccessToken(API_KEY, API_SECRET, { identity: "test", ttl: 60 });
+    testToken.addGrant({ roomJoin: true, room: "test" });
+    let test;
+    if (typeof testToken.toJwt === 'function' && testToken.toJwt.constructor.name === 'AsyncFunction') {
+      test = await testToken.toJwt();
+    } else {
+      test = testToken.toJwt();
+    }
+    if (typeof test === "string" && test.length > 0) {
+      console.log("✅ Credentials are valid.");
+    } else {
+      console.error("❌ Credentials are invalid. toJwt() returned:", test);
+    }
+  } catch (err) {
+    console.error("❌ Credentials test failed:", err.message);
   }
-} catch (err) {
-  console.error("❌ Credentials test failed:", err.message);
-}
+})();
 
 const app = express();
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
@@ -63,7 +70,13 @@ app.post("/token", async (req, res) => {
       canPublishData: true,
     });
 
-    const token = at.toJwt();
+    let token;
+    if (typeof at.toJwt === 'function' && at.toJwt.constructor.name === 'AsyncFunction') {
+      token = await at.toJwt();
+    } else {
+      token = at.toJwt();
+    }
+
     if (typeof token !== "string" || token.length === 0) {
       throw new Error(`Invalid token type: ${typeof token}`);
     }
